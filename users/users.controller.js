@@ -8,14 +8,32 @@ const userService = require("./user.service");
 // routes
 
 router.get("/", getAll);
+router.get("/profile", getUserProfile);
 router.get("/:id", getById);
 router.post("/", createSchema, create);
+router.put("/profile", updateSchema, updateUserProfile);
 router.put("/:id", updateSchema, update);
 router.delete("/:id", _delete);
 
 module.exports = router;
 
 // route functions
+function updateUserProfile(req, res, next) {
+  console.log("Request Object:", req);
+  console.log("Request Body:", req.body);
+
+  userService
+    .updateUserProfile(req.body)
+    .then(() => res.json({ message: "User updated succesfully" }))
+    .catch(next);
+}
+
+function getUserProfile(req, res, next) {
+  userService
+    .getUserProfile()
+    .then((users) => res.json(users))
+    .catch(next);
+}
 
 function getAll(req, res, next) {
   userService

@@ -7,6 +7,8 @@ module.exports = {
   create,
   update,
   delete: _delete,
+  getUserProfile,
+  updateUserProfile,
 };
 
 async function getAll() {
@@ -14,6 +16,7 @@ async function getAll() {
 }
 
 async function getById(id) {
+  console.log("BUSHET");
   return await getUser(id);
 }
 
@@ -27,7 +30,8 @@ async function create(params) {
 
   // hash password
 
-  user.passwordHash = await bcrypt.hash(params.password, 10);
+  // user.passwordHash = await bcrypt.hash(params.password, 10);
+  user.passwordHash = params.password;
 
   // save user
   await user.save();
@@ -36,21 +40,19 @@ async function create(params) {
 async function update(id, params) {
   const user = await getUser(id);
 
-  if (params.password === user.oldPassword) {
-    throw new Error("Cannot use the old password as the new password");
-  }
-
-  if (params.password) {
-    user.oldPassword = user.passwordHash;
-
-    user.passwordHash = params.password;
+  // validate
+  const emailChanged = params.email && user.email !== params.email;
+  if (
+    emailChanged &&
+    (await db.User.findOne({ where: { email: params.email } }))
+  ) {
+    throw 'Email "' + params.email + '" is already registered';
   }
 
   // if (params.password) {
   //   user.passwordHash = await bcrypt.hash(params.password, 10);
   // }
 
-  console.log("UPDATED");
   Object.assign(user, params);
   await user.save();
 }
@@ -66,4 +68,35 @@ async function getUser(id) {
   const user = await db.User.findByPk(id);
   if (!user) throw "User not found";
   return user;
+}
+
+async function getUserProfile() {
+  // Retrieve user data from the database based on the authenticated user's ID
+  const userIdToFind = 1;
+  const user = await db.User.findByPk(userIdToFind);
+
+  if (!user) throw "Way user nakit an";
+
+  return user;
+}
+
+async function updateUserProfile(params) {
+  const userIdToFind = 1;
+  const user = await db.User.findByPk(userIdToFind);
+
+  const emailChanged = params.email && user.email !== params.email;
+  if (
+    emailChanged &&
+    (await db.User.findOne({ where: { email: params.email } }))
+  ) {
+    throw 'Email "' + params.email + '" is already registered';
+  }
+
+  if (params.password) {
+    user.passwordHash = params.password;
+  }
+
+  Object.assign(user, params);
+  console.log("User object after update:", user.toJSON());
+  await user.save();
 }
