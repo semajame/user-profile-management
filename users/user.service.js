@@ -82,21 +82,15 @@ async function getUserProfile() {
 
 async function updateUserProfile(params) {
   const userIdToFind = 1;
-  const user = await db.User.findByPk(userIdToFind);
 
-  const emailChanged = params.email && user.email !== params.email;
-  if (
-    emailChanged &&
-    (await db.User.findOne({ where: { email: params.email } }))
-  ) {
-    throw 'Email "' + params.email + '" is already registered';
-  }
+  const user = await db.User.findByPk(userIdToFind);
 
   if (params.password) {
     user.passwordHash = params.password;
   }
-
   Object.assign(user, params);
-  console.log("User object after update:", user.toJSON());
+  // user.set(params);
+
   await user.save();
+  console.log("User object after update:", user.toJSON());
 }

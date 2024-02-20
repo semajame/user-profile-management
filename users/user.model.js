@@ -5,7 +5,6 @@ module.exports = model;
 function model(sequelize) {
   const attributes = {
     email: { type: DataTypes.STRING, allowNull: false },
-    title: { type: DataTypes.STRING, allowNull: false },
     firstName: { type: DataTypes.STRING, allowNull: false },
     lastName: { type: DataTypes.STRING, allowNull: false },
     passwordHash: { type: DataTypes.STRING, allowNull: false },
@@ -22,12 +21,11 @@ function model(sequelize) {
     },
   };
 
-  // const OldPassword = sequelize.define("OldPassword", {
-  //   oldPassword: {
-  //     type: DataTypes.STRING,
-  //     allowNull: false,
-  //   },
-  // });
+  const OldPassword = sequelize.define("OldPassword", {
+    oldPassword: {
+      type: DataTypes.STRING,
+    },
+  });
 
   return sequelize.define("User", attributes, options);
 }

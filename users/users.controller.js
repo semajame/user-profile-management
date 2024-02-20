@@ -24,7 +24,7 @@ function updateUserProfile(req, res, next) {
 
   userService
     .updateUserProfile(req.body)
-    .then(() => res.json({ message: "User updated succesfully" }))
+    .then(() => res.json({ message: "sakto!" }))
     .catch(next);
 }
 
@@ -59,7 +59,7 @@ function create(req, res, next) {
 function update(req, res, next) {
   userService
     .update(req.params.id, req.body)
-    .then(() => res.json({ message: "User updated" }))
+    .then(() => res.json({ message: "what dapak" }))
     .catch(next);
 }
 
@@ -74,7 +74,6 @@ function _delete(req, res, next) {
 
 function createSchema(req, res, next) {
   const schema = Joi.object({
-    title: Joi.string().required(),
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     email: Joi.string().email().required(),
@@ -86,7 +85,6 @@ function createSchema(req, res, next) {
 
 function updateSchema(req, res, next) {
   const schema = Joi.object({
-    title: Joi.string().empty(""),
     firstName: Joi.string().empty(""),
     lastName: Joi.string().empty(""),
     email: Joi.string().email().empty(""),
