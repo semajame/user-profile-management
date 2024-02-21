@@ -89,6 +89,18 @@ async function updateUserProfile(params) {
   console.log("User object BEFORE update:", user.toJSON());
 
   if (params.password) {
+    // Check if the new password matches any old password
+    const isOldPassword = await db.OldPassword.findOne({
+      where: {
+        userId: user.id,
+        oldPassword: params.password,
+      },
+    });
+
+    if (isOldPassword) {
+      throw new Error("New password cannot be the same as any old password");
+    }
+
     // Store the current password as an old password before updating
     await db.OldPassword.create({
       userId: user.id,

@@ -10,16 +10,16 @@ function model(sequelize) {
     passwordHash: { type: DataTypes.STRING, allowNull: false },
   };
 
-  // const options = {
-  //   defaultScope: {
-  //     // exclude password hash by default
-  //     attributes: { exclude: ["passwordHash"] },
-  //   },
-  //   scopes: {
-  //     // include hash with this scope
-  //     withHash: { attributes: {} },
-  //   },
-  // };
+  const options = {
+    defaultScope: {
+      // exclude password hash by default
+      attributes: { exclude: ["passwordHash"] },
+    },
+    scopes: {
+      // include hash with this scope
+      withHash: { attributes: {} },
+    },
+  };
 
-  return sequelize.define("User", attributes);
+  return sequelize.define("User", attributes, options);
 }
