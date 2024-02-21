@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const db = require("_helpers/db");
+const oldPasswordModel = require("./oldPassword.model");
 
 module.exports = {
   getAll,
@@ -85,12 +86,22 @@ async function updateUserProfile(params) {
 
   const user = await db.User.findByPk(userIdToFind);
 
+  console.log("User object BEFORE update:", user.toJSON());
+
   if (params.password) {
+    // Store the current password as an old password before updating
+    await db.OldPassword.create({
+      userId: user.id,
+      oldPassword: user.passwordHash,
+    });
+
+    // Update the user's password
     user.passwordHash = params.password;
   }
+
   Object.assign(user, params);
   // user.set(params);
 
   await user.save();
-  console.log("User object after update:", user.toJSON());
+  console.log("User object AFTER update:", user.toJSON());
 }
