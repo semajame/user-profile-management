@@ -80,16 +80,15 @@ async function getUserProfile() {
 
   return user;
 }
-
 async function updateUserProfile(params) {
   const userIdToFind = 1;
 
-  const user = await db.User.findByPk(userIdToFind);
-
-  console.log("User object BEFORE update:", user.toJSON());
+  // Retrieve the user with explicit selection of passwordHash
+  const user = await db.User.findByPk(userIdToFind, {
+    attributes: ["id", "email", "firstName", "lastName", "passwordHash"],
+  });
 
   if (params.password) {
-    // Check if the new password matches any old password
     const isOldPassword = await db.OldPassword.findOne({
       where: {
         userId: user.id,
@@ -101,19 +100,15 @@ async function updateUserProfile(params) {
       throw new Error("New password cannot be the same as any old password");
     }
 
-    // Store the current password as an old password before updating
     await db.OldPassword.create({
       userId: user.id,
       oldPassword: user.passwordHash,
     });
 
-    // Update the user's password
     user.passwordHash = params.password;
   }
 
   Object.assign(user, params);
-  // user.set(params);
 
   await user.save();
-  console.log("User object AFTER update:", user.toJSON());
 }
