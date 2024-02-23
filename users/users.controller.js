@@ -24,7 +24,7 @@ function updateUserProfile(req, res, next) {
 
   userService
     .updateUserProfile(req.body)
-    .then(() => res.json({ message: "sakto!" }))
+    .then(() => res.json({ message: "User Updated" }))
     .catch(next);
 }
 
@@ -59,7 +59,7 @@ function create(req, res, next) {
 function update(req, res, next) {
   userService
     .update(req.params.id, req.body)
-    .then(() => res.json({ message: "what dapak" }))
+    .then(() => res.json({ message: "User Updated" }))
     .catch(next);
 }
 
