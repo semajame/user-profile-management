@@ -17,7 +17,6 @@ async function getAll() {
 }
 
 async function getById(id) {
-  console.log("BUSHET");
   return await getUser(id);
 }
 
@@ -39,7 +38,9 @@ async function create(params) {
 }
 
 async function update(id, params) {
-  const user = await getUser(id);
+  const user = await db.User.findByPk(id, {
+    attributes: ["id", "email", "firstName", "lastName", "passwordHash"],
+  });
 
   // validate
   const emailChanged = params.email && user.email !== params.email;
@@ -53,6 +54,26 @@ async function update(id, params) {
   // if (params.password) {
   //   user.passwordHash = await bcrypt.hash(params.password, 10);
   // }
+
+  if (params.password) {
+    const isOldPassword = await db.OldPassword.findOne({
+      where: {
+        userId: user.id,
+        oldPassword: params.password,
+      },
+    });
+
+    if (isOldPassword) {
+      throw new Error("New password cannot be the same as any old password");
+    }
+
+    await db.OldPassword.create({
+      userId: user.id,
+      oldPassword: user.passwordHash,
+    });
+
+    user.passwordHash = params.password;
+  }
 
   Object.assign(user, params);
   await user.save();
