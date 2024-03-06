@@ -14,7 +14,7 @@ function model(sequelize) {
       allowNull: false,
       defaultValue: false,
     },
-    role: { type: DataTypes.STRING, allowNull: false },
+    role: { type: DataTypes.STRING, allowNull: true },
     status: {
       type: DataTypes.STRING,
       allowNull: false,

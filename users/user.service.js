@@ -125,17 +125,17 @@ async function _delete(id) {
 
 // helper functions
 
-async function getUser(id) {
-  const user = await db.User.findByPk(id);
-  if (!user) throw "User not found";
-  return user;
-}
+// async function getUser(id) {
+//   const user = await db.User.findByPk(id);
+//   if (!user) throw "User not found";
+//   return user;
+// }
 
 async function getUserProfile(id) {
   const user = await db.User.findByPk(id);
-
-  if (!user) throw "Way user nakit an";
-
+  if (!user) {
+    throw `User with ID ${id} not found`; // Informative error message
+  }
   return user;
 }
 
@@ -224,7 +224,7 @@ async function searchUsers({ name, email }) {
 }
 
 // ! Update user role
-async function updateUserRole(adminId, userId, newRole) {
+async function updateUserRole(userId, newRole) {
   const field = "Role"; // Specify the field being updated
   const user = await getUser(userId);
 
@@ -234,7 +234,6 @@ async function updateUserRole(adminId, userId, newRole) {
 
   // Create entry in Updated table
   await db.Updated.create({
-    adminId,
     userId,
     Field: field,
     value: newRole,
@@ -243,20 +242,19 @@ async function updateUserRole(adminId, userId, newRole) {
 }
 
 // ! Update Permission
-async function updatePermission(adminId, userId, changePermission) {
+async function updatePermission(userId, permission) {
   const field = "Permission"; // Specify the field being updated
   const user = await getUser(userId);
 
   // Update user permission
-  user.permission = changePermission;
+  user.permission = permission;
   await user.save();
 
-  // Create entry in Updated table
+  // // Create entry in Updated table
   await db.Updated.create({
-    adminId,
     userId,
     Field: field,
-    value: changePermission,
+    value: permission,
     updatedAt: new Date(),
   });
 }

@@ -4,7 +4,6 @@ module.exports = model;
 
 function model(sequelize) {
   const attributes = {
-    adminId: { type: DataTypes.INTEGER, allowNull: false },
     userId: { type: DataTypes.INTEGER, allowNull: false },
     Field: { type: DataTypes.STRING, allowNull: false },
     value: { type: DataTypes.STRING, allowNull: false },
@@ -13,5 +12,5 @@ function model(sequelize) {
 
   const options = {};
 
-  return sequelize.define("Updated", attributes, options);
+  return sequelize.define("role", attributes, options);
 }

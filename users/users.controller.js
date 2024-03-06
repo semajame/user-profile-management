@@ -9,15 +9,15 @@ const userService = require("./user.service");
 
 // get
 router.get("/search", searchSchema, searchUsers);
-router.get("/", getAll);
 router.get("/profile/:id", getUserProfile);
+router.get("/", getAll);
 router.get("/:id", getById);
 
 // create
 router.post("/", createSchema, create);
 
 // update
-router.put("/profile", updateSchema, updateUserProfile);
+router.put("/profile/:id", updateSchema, updateUserProfile);
 router.put("/profile/password/:id", updateSchema, updatePassword);
 router.put("/:id", updateSchema, update);
 
@@ -37,9 +37,6 @@ module.exports = router;
 
 // route functions
 function updateUserProfile(req, res, next) {
-  console.log("Request Object:", req);
-  console.log("Request Body:", req.body);
-
   userService
     .updateUserProfile(req.body)
     .then(() => res.json({ message: "User Updated" }))
@@ -48,7 +45,7 @@ function updateUserProfile(req, res, next) {
 
 function getUserProfile(req, res, next) {
   userService
-    .getUserProfile()
+    .getUserProfile(req.params.id)
     .then((users) => res.json(users))
     .catch(next);
 }
@@ -138,10 +135,10 @@ async function searchUsers(req, res, next) {
 
 async function updateRole(req, res, next) {
   const { id } = req.params;
-  const { adminId, newRole } = req.body;
+  const { newRole } = req.body;
 
   try {
-    await userService.updateUserRole(adminId, id, newRole);
+    await userService.updateUserRole(id, newRole);
     res.json({ message: "User role updated" });
   } catch (error) {
     next(error);
@@ -150,10 +147,10 @@ async function updateRole(req, res, next) {
 
 async function updatePermission(req, res, next) {
   const { id } = req.params;
-  const { adminId, changePermission } = req.body;
+  const { permission } = req.body;
 
   try {
-    await userService.updatePermission(adminId, id, changePermission);
+    await userService.updatePermission(id, permission);
     res.json({ message: "User permission updated" });
   } catch (error) {
     next(error);
@@ -201,18 +198,6 @@ function createSchema(req, res, next) {
     lastName: Joi.string().required(),
     userName: Joi.string().required(),
     email: Joi.string().email().required(),
-    role: Joi.string()
-      .valid(
-        Role.Admin,
-        Role.User,
-        Role.Faculty,
-        Role.Student,
-        Role.admin,
-        Role.student,
-        Role.user,
-        Role.faculty
-      )
-      .required(),
     password: Joi.string().min(6).required(),
     confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
   });
@@ -225,6 +210,18 @@ function updateSchema(req, res, next) {
     lastName: Joi.string().empty(""),
     userName: Joi.string().empty(""),
     email: Joi.string().email().empty(""),
+    role: Joi.string()
+      .valid(
+        Role.Admin,
+        Role.User,
+        Role.Faculty,
+        Role.Student,
+        Role.admin,
+        Role.student,
+        Role.user,
+        Role.faculty
+      )
+      .empty(""),
     password: Joi.string().min(6).empty(""),
     confirmPassword: Joi.string().valid(Joi.ref("password")).empty(""),
   }).with("password", "confirmPassword");
