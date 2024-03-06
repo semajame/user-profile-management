@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const db = require("_helpers/db");
 const oldPasswordModel = require("./oldPassword.model");
+const { Op } = require("sequelize");
 
 module.exports = {
   getAll,
@@ -10,7 +11,23 @@ module.exports = {
   delete: _delete,
   getUserProfile,
   updateUserProfile,
+  updatePassword,
+
+  // user role
+  updatePermission,
+  updateUserRole,
+  searchUsers,
+  getByUsername,
+
+  // user deactivation
+  deactivate,
+  reactivate,
 };
+
+async function getByUsername(username) {
+  const user = await db.User.findOne({ where: { userName: username } });
+  return user;
+}
 
 async function getAll() {
   return await db.User.findAll();
@@ -30,8 +47,9 @@ async function create(params) {
 
   // hash password
 
-  // user.passwordHash = await bcrypt.hash(params.password, 10);
-  user.passwordHash = params.password;
+  user.passwordHash = await bcrypt.hash(params.password, 10);
+
+  // user.passwordHash = params.password;
 
   // save user
   await user.save();
@@ -39,11 +57,19 @@ async function create(params) {
 
 async function update(id, params) {
   const user = await db.User.findByPk(id, {
-    attributes: ["id", "email", "firstName", "lastName", "passwordHash"],
+    attributes: [
+      "id",
+      "email",
+      "firstName",
+      "lastName",
+      "passwordHash",
+      "userName",
+    ],
   });
 
   // validate
   const emailChanged = params.email && user.email !== params.email;
+
   if (
     emailChanged &&
     (await db.User.findOne({ where: { email: params.email } }))
@@ -51,28 +77,41 @@ async function update(id, params) {
     throw 'Email "' + params.email + '" is already registered';
   }
 
-  // if (params.password) {
-  //   user.passwordHash = await bcrypt.hash(params.password, 10);
-  // }
+  Object.assign(user, params);
+  await user.save();
+}
+
+async function updatePassword(id, params) {
+  const user = await db.User.findByPk(id, {
+    attributes: ["id", "passwordHash"],
+  });
 
   if (params.password) {
-    const isOldPassword = await db.OldPassword.findOne({
-      where: {
-        userId: user.id,
-        oldPassword: params.password,
-      },
-    });
-
-    if (isOldPassword) {
-      throw new Error("New password cannot be the same as any old password");
+    if (params.password === user.passwordHash) {
+      throw new Error(
+        "New password cannot be the same as the current password"
+      );
     }
 
-    await db.OldPassword.create({
-      userId: user.id,
-      oldPassword: user.passwordHash,
-    });
+    if (params.password) {
+      const isOldPassword = await db.OldPassword.findOne({
+        where: {
+          userId: user.id,
+          oldPassword: params.password,
+        },
+      });
 
-    user.passwordHash = params.password;
+      if (isOldPassword) {
+        throw new Error("New password cannot be the same as any old password");
+      }
+
+      await db.OldPassword.create({
+        userId: user.id,
+        oldPassword: user.passwordHash,
+      });
+
+      user.passwordHash = await bcrypt.hash(params.password, 10);
+    }
   }
 
   Object.assign(user, params);
@@ -92,15 +131,14 @@ async function getUser(id) {
   return user;
 }
 
-async function getUserProfile() {
-  // Retrieve user data from the database based on the authenticated user's ID
-  const userIdToFind = 1;
-  const user = await db.User.findByPk(userIdToFind);
+async function getUserProfile(id) {
+  const user = await db.User.findByPk(id);
 
   if (!user) throw "Way user nakit an";
 
   return user;
 }
+
 async function updateUserProfile(params) {
   const userIdToFind = 1;
 
@@ -132,4 +170,93 @@ async function updateUserProfile(params) {
   Object.assign(user, params);
 
   await user.save();
+}
+
+// DEACTIVATE
+
+async function deactivate(id) {
+  const user = await getUser(id);
+
+  // Set isactive to 0 and set datedeactivated to current date
+  user.status = "inactive";
+  user.datedeactivated = new Date(); // This will set the current date and time
+
+  // Save the updated user
+  await user.save();
+}
+
+async function reactivate(id) {
+  const user = await getUser(id);
+
+  // Set status to 0 and set datedeactivated to current date
+  user.status = "active";
+  user.datereactivated = new Date(); // This will set the current date and time
+
+  // Save the updated user
+  await user.save();
+}
+
+// USER ROLE
+
+// ! Search Users
+async function searchUsers({ name, email }) {
+  let whereClause = {};
+
+  if (name) {
+    const nameClause = {
+      [Op.or]: [
+        { firstName: { [Op.like]: `%${name}%` } },
+        { lastName: { [Op.like]: `%${name}%` } },
+      ],
+    };
+    whereClause = { ...whereClause, ...nameClause };
+  }
+
+  if (email) {
+    whereClause.email = { [Op.like]: `%${email}%` };
+  }
+
+  if (!name && !email) {
+    return await getAll(); // Assuming getAll() is another function that retrieves all users
+  } else {
+    return await db.User.findAll({ where: whereClause });
+  }
+}
+
+// ! Update user role
+async function updateUserRole(adminId, userId, newRole) {
+  const field = "Role"; // Specify the field being updated
+  const user = await getUser(userId);
+
+  // Update user role
+  user.role = newRole;
+  await user.save();
+
+  // Create entry in Updated table
+  await db.Updated.create({
+    adminId,
+    userId,
+    Field: field,
+    value: newRole,
+    updatedAt: new Date(),
+  });
+}
+
+// ! Update Permission
+async function updatePermission(adminId, userId, changePermission) {
+  const field = "Permission"; // Specify the field being updated
+  const user = await getUser(userId);
+
+  // Update user permission
+  user.permission = changePermission;
+  await user.save();
+
+  // Create entry in Updated table
+  await db.Updated.create({
+    adminId,
+    userId,
+    Field: field,
+    value: changePermission,
+    updatedAt: new Date(),
+  });
 }

@@ -25,6 +25,7 @@ async function initialize() {
   // init models and add them to the exported db object
   db.User = require("../users/user.model")(sequelize);
   db.OldPassword = require("../users/oldPassword.model")(sequelize);
+  db.Updated = require("../users/updated.model")(sequelize);
 
   // sync all models with database
   await sequelize.sync({ alter: true });
